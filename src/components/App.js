@@ -16,7 +16,6 @@ import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import * as Auth from "./Auth";
 import InfoTooltip from "./InfoTooltip.js";
 
-
 function App() {
   const [isEditProfilePopupOpen, setIsEditProfilePopupOpen] = useState(false);
   const [isAddPlacePopupOpen, setIsAddPlacePopupOpen] = useState(false);
@@ -29,9 +28,10 @@ function App() {
   const [userEmail, setUserEmail] = useState("");
   const [infoTooltip, setInfoTooltip] = useState(false);
   const [titleError, setTitleError] = useState("");
+  const [imageYesNo, setImageYesNo] = useState(false);
 
   useEffect(() => {
-    checkToken();
+   
     Promise.all([api.getInitialCards(), api.getUserData()])
       .then(([cards, res]) => {
         setCards(cards);
@@ -39,6 +39,11 @@ function App() {
       })
       .catch((err) => console.log(`Ошибка ${err}`));
   }, []);
+  
+  useEffect(() => {
+    checkToken();
+  }, [loggedIn]);
+
 
   function handleUpdateUser(card) {
     api
@@ -115,60 +120,81 @@ function App() {
     setInfoTooltip(false);
   }
 
-  function handleLogin(){
+  function handleLogin() {
     setLoggedIn(true);
   }
-  function handleRegister(){
+  function handleRegister() {
     setLoggedIn(true);
   }
 
   function checkToken() {
-    if(localStorage.getItem("token")){
-    const token = localStorage.getItem("token");
-    Auth.getContent(token)
-      .then((data) => {
-        if (!data) {
-          return;
-        }
-        setLoggedIn(true);
-        navigate("/");
-        setUserEmail(data.data.email);
-      })
-      .catch(() => {
-        setLoggedIn(false);
-      });}
+    if (localStorage.getItem("token")) {
+      const token = localStorage.getItem("token");
+      Auth.getContent(token)
+        .then((data) => {
+          if (!data) {
+            return;
+          }
+          setLoggedIn(true);
+          navigate("/");
+          setUserEmail(data.data.email);
+        })
+        .catch(() => {
+          setLoggedIn(false);
+        });
+    }
   }
-
- /* useEffect(() => {
-    checkToken();
-  }, []);*/
   
 
-  function goOut(){
-    localStorage.removeItem('token');
-    navigate('/sign-in');
+
+  function goOut() {
+    localStorage.removeItem("token");
+    navigate("/sign-in");
+    setLoggedIn(false);
   }
 
   return (
     <div className="root">
       <div className="page">
         <CurrentUserContext.Provider value={currentUser}>
-        
           <Routes>
-            <Route path="/sign-up" element={<Register handleRegister = {handleRegister} setInfoTooltip ={setInfoTooltip} setTitleError = {setTitleError} />} />
+            <Route
+              path="/sign-up"
+              element={
+                <Register
+                  handleRegister={handleRegister}
+                  setInfoTooltip={setInfoTooltip}
+                  setTitleError={setTitleError}
+                  setImageYesNo={setImageYesNo}
+                />
+              }
+            />
             <Route
               path="/sign-in"
-              element={<Login handleLogin={handleLogin} />}
+              element={
+                <Login
+                  handleLogin={handleLogin}
+                  setUserEmail = {setUserEmail}
+                  setTitleError={setTitleError}
+                  setImageYesNo={setImageYesNo}
+                  setInfoTooltip={setInfoTooltip}
+                />
+              }
             />
-           <Route path="/mesto-react" element={loggedIn? <Navigate to = "/"/>:<Navigate to = "/sign-in"/>}/>
+            <Route
+              path="/react-mesto-auth"
+              element={
+                loggedIn ? <Navigate to="/" /> : <Navigate to="/sign-in" />
+              }
+            />
             <Route
               path="/"
               element={
                 <ProtectedRoute
                   element={Main}
                   loggedIn={loggedIn}
-                  userEmail = {userEmail}
-                  onClick = {goOut}
+                  userEmail={userEmail}
+                  onClick={goOut}
                   onEditProfile={setIsEditProfilePopupOpen}
                   onAddPlace={setIsAddPlacePopupOpen}
                   onEditAvatar={setIsEditAvatarPopupOpen}
@@ -211,14 +237,12 @@ function App() {
             //isOpen={}
             onClose={closeAllPopup}
           />
-         <InfoTooltip
-            onClose = {closeAllPopup}
+          <InfoTooltip
+            onClose={closeAllPopup}
             isOpen={infoTooltip}
-            title = {titleError}
+            title={titleError}
+            imageYesNo={imageYesNo}
           />
-          
-
-        
         </CurrentUserContext.Provider>
       </div>
     </div>
